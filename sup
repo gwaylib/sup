@@ -1,0 +1,396 @@
+#!/bin/bash
+
+# sup version
+sup_ver="v3"
+
+# 检查依赖
+if [ -z "$PJ_NAME" ]; then
+    echo "\$PJ_NAME NOT FOUND"
+    exit 1
+fi
+if [ -z "$PJ_ROOT" ]; then
+    echo "\$PJ_ROOT NOT FOUND"
+    exit 1
+fi
+
+# 环境变量配置
+pwd_dir=`pwd`
+if [ ${#1} -gt 0 ]; then
+	pwd_dir=$1
+fi
+
+app_name="`basename $pwd_dir`"
+app_path="${pwd_dir#\/*src\/}"
+
+cfg_name="$PJ_NAME.${app_path//\//.}"
+
+pub_root="$PJ_ROOT/publish"
+pub_dir="$pub_root/$PJ_NAME"
+pub_root_res="etc"
+pub_app_res="res public"
+if [ !"$PUB_ROOT_RES" ] ; then
+	pub_root_res="$PUB_ROOT_RES"
+fi
+if [ !"$PUB_APP_RES" ] ; then
+	pub_root_res="$PUB_APP_RES"
+fi
+
+sup_mode="src"
+sup_etc_dir="/etc/supervisor/conf.d"
+if [ !"$SUP_ETC_DIR" ] ; then
+	sup_etc_dir="$SUP_ETC_DIR"
+fi
+if [ "${sup_etc_dir: -1}" = "/" ]; then
+	sup_etc_dir="${sup_etc_dir%?}"
+fi
+sup_log_dir="$PJ_ROOT/var/log"
+mkdir -p $sup_log_dir
+sup_log_size="1MB"
+if [ !"$SUP_LOG_SIZE" ] ; then
+        sup_log_size="$SUP_LOG_SIZE"
+fi
+sup_log_bak="10"
+if [ !"$SUP_LOG_BAK" ] ; then
+        sup_log_bak="$SUP_LOG_BAK"
+fi
+sup_app_env="PJ_ROOT=\\\"$PJ_ROOT\\\",GIN_MODE=\\\"release\\\",LD_LIBRARY_PATH=\\\"$LD_LIBRARY_PATH\\\""
+if [ !"$SUP_APP_ENV" ] ; then
+        sup_app_env="$SUP_APP_ENV"
+fi
+
+resetCfgName(){
+	pwd_dir="`pwd`"
+	if [ ${#1} -gt 0 ]; then
+		pwd_dir="$1"
+	fi
+	app_name="`basename $pwd_dir`"
+	app_path="${pwd_dir#\/*src\/}"
+	cfg_name="$PJ_NAME.${app_path//\//.}"
+}
+
+# call supevisorctl
+callSup(){
+	command -v supervisorctl >/dev/null 2>&1 || { echo -e >&2 "Aborted. \nRequire 'supervisorctl' but it's not installed, you need to install supervisor service at first. \nFor example on debian system: sudo apt-get install supervisor."; exit 1; }
+	sudo supervisorctl $*
+}
+
+startApp(){
+	resetCfgName
+	if [ $# -gt 0 ]; then
+		callSup start $1 $2 $3 $4 $5 $6 $7 $8
+	else
+		callSup start $cfg_name
+	fi
+}
+
+restartApp(){
+	resetCfgName
+	if [ $# -gt 0 ]; then
+   		callSup restart $1 $2 $3 $4 $5 $6 $7 $8
+	else
+        callSup restart $cfg_name
+ 	fi
+}
+
+stopApp(){
+	resetCfgName
+	if [ $# -gt 0 ]; then
+   		callSup stop $1 $2 $3 $4 $5 $6 $7 $8
+	else
+	    callSup stop $cfg_name
+	fi
+}
+
+tailApp(){
+	resetCfgName
+	if [ $# -gt 0 ]; then
+    	callSup tail $1 $2 $3 $4 $5 $6 $7 $8
+	else
+   		callSup tail $cfg_name
+	fi
+}
+tailfApp(){
+	resetCfgName
+	if [ $# -gt 0 ]; then
+   		callSup tail -f $1 $2 $3 $4 $5 $6 $7 $8
+	else
+    	callSup tail -f $cfg_name
+	fi
+}
+
+# 查询supervisor的状态
+supStatus(){
+	echo "======================================================="
+	echo "Using sup to manage process"
+	echo "======================================================="
+	callSup status|grep $PJ_NAME[.]
+	echo "======================================================="
+}
+
+goBuild(){
+	# go  build
+	if [ $# -gt 0 ]; then
+		go build $1 $2 $3 $4 $5 $6 $7 $8 || exit 1
+	else
+		go build || exit 1
+	fi
+}
+
+goGet(){
+    go get github.com/gwaycc/goget
+	# go get package
+	if [ $# -gt 0 ]; then
+		goget -insecure -d -v $1 $2 $3 $4 $5 $6 $7 $8 || exit 1
+	else
+		goget -insecure -d -v || exit 1
+	fi
+}
+
+goUpdate(){
+    go get -u github.com/gwaycc/goget
+	# go get -u package
+	if [ $# -gt 0 ]; then
+		goget -insecure -d -v -u $1 $2 $3 $4 $5 $6 $7 $8 || exit 1
+	else
+		goget -insecure -d -v -u || exit 1
+	fi
+}
+
+# 编译程序
+# 需进入当前目录才能编译
+buildApp() {
+	resetCfgName
+	echo '#' "Building ($cfg_name)"
+	goBuild $*
+}
+
+# 下载最新依赖编译程序
+# 需进入当前目录才能编译
+getApp(){
+	resetCfgName
+	echo '#' "Doing go get ($cfg_name) $1 $2 $3 $4 $5 $6 $7 $8"
+	goGet $*
+}
+
+# 下载最新依赖编译程序
+# 需进入当前目录才能编译
+updateApp(){
+	resetCfgName
+	echo '#' "Doing go get ($cfg_name) -u $1 $2 $3 $4 $5 $6 $7 $8"
+	goUpdate $*
+}
+
+# 编译程序
+# 需进入当前目录才能编译
+installApp() {
+	resetCfgName
+	
+	# build supervisor conf
+	sudo mkdir -p $sup_etc_dir
+	if [ -f "$sup_etc_dir/$cfg_name.conf" ]; then
+		echo '#' "'$cfg_name' already exist, need clean at first"
+		return 1
+	fi
+	
+	if [ ! -f "$pwd_dir/$app_name" ]; then
+		echo '#' "Not found '$cfg_name' binary command, need build at first"
+		return 1
+	fi
+	
+	echo '#' "Installing ($cfg_name)"
+	# 设定supervisor的环境变量
+	sudo bash -c "echo "[program:$cfg_name]" > $sup_etc_dir/$cfg_name.conf"
+	sudo bash -c "echo "user=$USER" >> $sup_etc_dir/$cfg_name.conf"
+	sudo bash -c "echo "environment="$sup_app_env"" >> $sup_etc_dir/$cfg_name.conf"
+	sudo bash -c "echo "command="$pwd_dir/$app_name $1 $2 $3 $4 $5 $6 $7 $8"" >> $sup_etc_dir/$cfg_name.conf"
+	sudo bash -c "echo "autostart=true" >> $sup_etc_dir/$cfg_name.conf"
+	sudo bash -c "echo "autorestart=true" >> $sup_etc_dir/$cfg_name.conf"
+	sudo bash -c "echo "directory=$pwd_dir" >> $sup_etc_dir/$cfg_name.conf"
+	sudo bash -c "echo "stdout_logfile=$sup_log_dir/$cfg_name.logfile.stdout" >> $sup_etc_dir/$cfg_name.conf"
+	sudo bash -c "echo "stdout_logfile_maxbytes=$sup_log_size" >> $sup_etc_dir/$cfg_name.conf"
+	sudo bash -c "echo "stdout_logfile_backups=$sup_log_bak" >> $sup_etc_dir/$cfg_name.conf"
+	sudo bash -c "echo "stdout_capture=$PJ_ROOT/var/log/$cfg_name.captuer.stdout" >> $sup_etc_dir/$cfg_name.conf"
+	sudo bash -c "echo "stdout_capture_maxbytes=$sup_log_size" >> $sup_etc_dir/$cfg_name.conf"
+	sudo bash -c "echo "stdout_capture_backups=$sup_log_bak" >> $sup_etc_dir/$cfg_name.conf"
+	sudo bash -c "echo "stderr_logfile=$sup_log_dir/$cfg_name.logfile.stderr" >> $sup_etc_dir/$cfg_name.conf"
+	sudo bash -c "echo "stderr_logfile_maxbytes=$sup_log_size" >> $sup_etc_dir/$cfg_name.conf"
+	sudo bash -c "echo "stderr_logfile_backups=$sup_log_bak" >> $sup_etc_dir/$cfg_name.conf"
+	sudo bash -c "echo "stderr_capture=$PJ_ROOT/var/log/$cfg_name.capture.stderr" >> $sup_etc_dir/$cfg_name.conf"
+	sudo bash -c "echo "stderr_capture_maxbytes=$sup_log_size" >> $sup_etc_dir/$cfg_name.conf"
+	sudo bash -c "echo "stderr_capture_backups=$sup_log_bak" >> $sup_etc_dir/$cfg_name.conf"
+	sudo bash -c "echo "" >> $sup_etc_dir/$cfg_name.conf"
+	callSup reread
+	callSup add $cfg_name
+}
+
+# 清理程序
+# 需进入当前目录才能清理
+cleanApp(){
+        resetCfgName
+
+	echo '#' "Cleaning ($cfg_name)"
+        if [ -f "$sup_etc_dir/$cfg_name.conf" ]; then
+                callSup stop $cfg_name||exit 1
+                callSup remove $cfg_name||exit 1
+                sudo rm $sup_etc_dir/$cfg_name.conf||exit 1
+        fi
+}
+
+# 打包程序
+publishApp(){
+	resetCfgName
+	echo '#' "Publishing $cfg_name to $pub_dir"
+	
+	mkdir -p $pub_dir/bin
+	cp -rf $PJ_ROOT/env.bash $pub_dir/||exit 1
+	cp -rf $(dirname $0)/sup $pub_dir/bin/||exit 1
+	sed -i "s/sup_mode=\"src\"/sup_mode=\"pub\"/g" $pub_dir/bin/sup||exit 1
+
+	# collecting root directory
+	for d in $pub_root_res
+	do
+		if [ -d $PJ_ROOT/$d ]; then
+			mkdir -p $pub_dir/$d||exit 1
+			cp -rf $PJ_ROOT/$d $pub_dir/||exit 1
+		fi
+	done
+	
+	# build app
+	goBuild $* || exit 1
+	rm -rf $pub_dir/src/$app_path||exit 1
+	mkdir -p $pub_dir/src/$app_path||exit 1
+
+	# collecting for main app
+	mv $app_name $pub_dir/src/$app_path||exit 1
+	for d in $pub_app_res
+	do
+		if [ -d $pwd_dir/$d ]; then
+			cp -rf $pwd_dir/$d $pub_dir/src/$app_path||exit 1
+		fi
+	done
+}
+
+redoCmd(){
+	# 备份当前目录
+	currdir=`pwd`
+	buildp=$currdir
+	args="$2 $3 $4 $5 $6 $7 $8"
+	
+	# 校验是否是全部编译
+	if [ "$2" = "all" ] ; then
+		buildp=$SUP_BUILD_PATH
+		# Spec for publish
+		if [ "$1" = "publish" ]; then
+			rm -rf $pub_dir||exit 1
+		fi
+        	# rebuild args
+        	args="$3 $4 $5 $6 $7 $8"
+	fi
+	
+	for a in $buildp
+	do
+		if [ -d $a ]; then
+	       		cd $a
+	       		case "$1" in
+	                	"start")
+	                	        startApp $args
+	                	        ;;
+	                	"stop")
+	                	        stopApp $args
+	                	        ;;
+	                	"restart")
+	                	        restartApp $args
+	                	        ;;
+	                	"tail")
+	                	        tailApp $args
+	                	        ;;
+	                	"tailf")
+	                	        tailfApp $args
+	                	        ;;
+	                	"build")
+	                	        buildApp $args
+	                	        ;;
+	                	"get")
+	                	        getApp $args
+	                	        ;;
+	                	"install")
+	                	        installApp $args
+	                	        ;;
+	                	"update")
+	                	        updateApp $args
+	                	        ;;
+	                	"clean")
+	                	        cleanApp $args
+	                	        ;;
+	                	"publish")
+	                	        publishApp $args
+	                	        ;;
+	        	esac
+		fi
+	done
+	
+	cd $currdir
+}
+
+
+# shell参数入口
+case "$1" in 
+	"start"|"stop"|"restart"|"tail"|"tailf"|"install"|"clean")
+		redoCmd $*
+		exit 0
+	;;
+	"build"|"get"|"update"|"publish")
+		if [ "$sup_mode" == "pub" ]; then
+			echo '#' "Can not use the command in published mode"
+			exit 0
+		fi
+		redoCmd $*
+		exit 0
+	;;
+
+	""|"help")
+		# TODO:英文化
+       echo "此脚本集成go与supervisord来管理当前项目发布的程序，以下常用管理指令，以下指令之外的请使用源程序"
+       echo ""
+       echo "以下是编译使用的指令："
+       echo "sup get -- 下载当前目录下的依赖, 支持go get参数扩展"
+       echo "sup get all -- 依次下载env.bash的\$SUP_BUILD_PATH路径下的依赖"
+       echo "sup update -- 使用最新的库编译应用(go get -u), 并支持go get参数扩展"
+       echo "sup update all -- 使用最新的库编译env.bash的\$SUP_BUILD_PATH路径下的程序"
+       echo "sup build -- 编译程序, 支持go参数扩展"
+       echo "sup build all -- 依次编译env.bash的\$SUP_BUILD_PATH路径下的程序"
+       echo ""
+       echo "以下是部署使用的指令："
+       echo "sup status 查看当前工程的部署运作情况"
+       echo "sup install [app_args]-- 安装当前目录程序的supervisor配置文件, 若运行时需要参数，请填写"
+       echo "sup install all -- 安装env.bash的\$SUP_BUILD_PATH路径下程序的supervisor配置文件，该指令暂未支持运行参数传递"
+       echo "sup clean -- 清理当前目录的发布环境"
+       echo "sup clean all -- 依次清理env.bash的\$SUP_BUILD_PATH路径下的发布环境"
+       echo "sup publish -- 发布为非源码部署, 支持go build参数扩展"
+       echo "sup publish all -- 依次发布env.bash的\$SUP_BUILD_PATH路径下的部署"
+       echo "sup start -- 启动当前目录的程序(supervisorctrl start \$cfg_name)"
+       echo "sup start all -- 依次启动env.bash的\$SUP_BUILD_PATH路径下的程序"
+       echo "sup restart -- 重启当前目录的程序(supervisorctrl restart \$cfg_name)"
+       echo "sup restart all -- 依次重启env.bash的\$SUP_BUILD_PATH路径下的程序"
+       echo "sup stop -- 停止当前目录的程序(supervisorctrl stop \$cfg_name)"
+       echo "sup stop all -- 依次停止env.bash的\$SUP_BUILD_PATH路径下的程序"
+       echo "sup tail [\$cfg_name stdout] # 查看当前目录[应用]状态0的控制台输出，等价于 supervisorctrl tail \$cfg_name stdout"
+       echo "sup tailf [\$cfg_name stdout] # 查看当前目录[应用]状态0的控制台输出，等价于 supervisorctrl tail -f \$cfg_name stdout"
+       echo ""
+       echo "supervisord管理命令请参考supervisorctl help"
+       exit 0
+	;;
+	"status")
+		supStatus
+		exit 0
+	;;
+	"version")
+		echo  "sup versoin:" $sup_ver
+		exit 0
+	;;
+	*)
+		echo '#' "Unsupport command '$*', you can use offical command to do it."
+		exit 0
+	;;
+esac
+
