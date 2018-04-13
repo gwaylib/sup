@@ -137,7 +137,7 @@ goBuild(){
 }
 
 goGet(){
-    go get github.com/gwaycc/goget
+    go get github.com/gwaylib/goget
 	# go get package
 	if [ $# -gt 0 ]; then
 		goget -insecure -d -v $1 $2 $3 $4 $5 $6 $7 $8 || exit 1
@@ -147,7 +147,7 @@ goGet(){
 }
 
 goUpdate(){
-    go get -u github.com/gwaycc/goget
+    go get -u github.com/gwaylib/goget
 	# go get -u package
 	if [ $# -gt 0 ]; then
 		goget -insecure -d -v -u $1 $2 $3 $4 $5 $6 $7 $8 || exit 1
