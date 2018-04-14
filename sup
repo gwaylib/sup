@@ -32,7 +32,7 @@ if [ !"$PUB_ROOT_RES" ] ; then
 	pub_root_res="$PUB_ROOT_RES"
 fi
 if [ !"$PUB_APP_RES" ] ; then
-	pub_root_res="$PUB_APP_RES"
+	pub_app_res="$PUB_APP_RES"
 fi
 
 sup_mode="src"
