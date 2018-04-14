@@ -261,7 +261,7 @@ publishApp(){
 	mkdir -p $pub_dir/src/$app_path||exit 1
 
 	# collecting for main app
-	mv $app_name $pub_dir/src/$app_path||exit 1
+	cp $app_name $pub_dir/src/$app_path||exit 1
 	for d in $pub_app_res
 	do
 		if [ -d $pwd_dir/$d ]; then
