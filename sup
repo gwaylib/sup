@@ -244,7 +244,13 @@ publishApp(){
 	mkdir -p $pub_dir/bin
 	cp -rf $PJ_ROOT/env.bash $pub_dir/||exit 1
 	cp -rf $(dirname $0)/sup $pub_dir/bin/||exit 1
-	sed -i "s/sup_mode=\"src\"/sup_mode=\"pub\"/g" $pub_dir/bin/sup||exit 1
+
+    if [ `uname` = "Darwin" ]
+    then
+	    sed -i "" "s/sup_mode=\"src\"/sup_mode=\"pub\"/g" $pub_dir/bin/sup||exit 1
+    else
+	    sed -i "s/sup_mode=\"src\"/sup_mode=\"pub\"/g" $pub_dir/bin/sup||exit 1
+    fi
 
 	# collecting root directory
 	for d in $pub_root_res
