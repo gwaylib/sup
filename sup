@@ -6,11 +6,11 @@ sup_ver="v3"
 # 检查依赖
 if [ -z "$PJ_NAME" ]; then
     echo "\$PJ_NAME NOT FOUND"
-    exit 1
+    exit 0
 fi
-if [ -z "$PJ_ROOT" ]; then
-    echo "\$PJ_ROOT NOT FOUND"
-    exit 1
+if [ -z "$GOSPACE" ]; then
+    echo "\$GOSPACE NOT FOUND"
+    exit 0
 fi
 
 # 环境变量配置
@@ -24,7 +24,7 @@ app_path="${pwd_dir#\/*src\/}"
 
 cfg_name="$PJ_NAME.${app_path//\//.}"
 
-pub_root="$PJ_ROOT/publish"
+pub_root="$GOSPACE/publish"
 pub_dir="$pub_root/$PJ_NAME"
 pub_root_res="etc"
 pub_app_res="res public"
@@ -43,7 +43,7 @@ fi
 if [ "${sup_etc_dir: -1}" = "/" ]; then
 	sup_etc_dir="${sup_etc_dir%?}"
 fi
-sup_log_dir="$PJ_ROOT/var/log"
+sup_log_dir="$GOSPACE/var/log"
 mkdir -p $sup_log_dir
 sup_log_size="1MB"
 if [ !"$SUP_LOG_SIZE" ] ; then
@@ -53,7 +53,7 @@ sup_log_bak="10"
 if [ !"$SUP_LOG_BAK" ] ; then
         sup_log_bak="$SUP_LOG_BAK"
 fi
-sup_app_env="PJ_ROOT=\\\"$PJ_ROOT\\\",GIN_MODE=\\\"release\\\",LD_LIBRARY_PATH=\\\"$LD_LIBRARY_PATH\\\""
+sup_app_env="GOSPACE=\\\"$GOSPACE\\\",GIN_MODE=\\\"release\\\",LD_LIBRARY_PATH=\\\"$LD_LIBRARY_PATH\\\""
 if [ !"$SUP_APP_ENV" ] ; then
         sup_app_env="$SUP_APP_ENV"
 fi
@@ -65,12 +65,16 @@ resetCfgName(){
 	fi
 	app_name="`basename $pwd_dir`"
 	app_path="${pwd_dir#\/*src\/}"
-	cfg_name="$PJ_NAME.${app_path//\//.}"
+    if [ !"app_path" ]; then
+	    cfg_name="$PJ_NAME.src"
+    else
+	    cfg_name="$PJ_NAME.${app_path//\//.}"
+    fi
 }
 
 # call supevisorctl
 callSup(){
-	command -v supervisorctl >/dev/null 2>&1 || { echo -e >&2 "Aborted. \nRequire 'supervisorctl' but it's not installed, you need to install supervisor service at first. \nFor example on debian system: sudo apt-get install supervisor."; exit 1; }
+	command -v supervisorctl >/dev/null 2>&1 || { echo -e >&2 "Aborted. \nRequire 'supervisorctl' but it's not installed, you need to install supervisor service at first. \nFor example on debian system: sudo apt-get install supervisor."; exit 0; }
 	sudo supervisorctl $*
 }
 
@@ -130,29 +134,48 @@ supStatus(){
 goBuild(){
 	# go  build
 	if [ $# -gt 0 ]; then
-		go build $1 $2 $3 $4 $5 $6 $7 $8 || exit 1
+		go build $1 $2 $3 $4 $5 $6 $7 $8 || exit 0
 	else
-		go build || exit 1
+		go build || exit 0
 	fi
 }
 
 goGet(){
     go get github.com/gwaylib/goget
+
+    # do godep
+    depEnsure || exit 0
 	# go get package
 	if [ $# -gt 0 ]; then
-		goget -insecure -d -v $1 $2 $3 $4 $5 $6 $7 $8 || exit 1
+		goget -insecure -d -v $1 $2 $3 $4 $5 $6 $7 $8 || exit 0
 	else
-		goget -insecure -d -v || exit 1
+		goget -insecure -d -v || exit 0
 	fi
 }
 
+depEnsure(){
+    goget github.com/gwaylib/godep/cmd/godep
+    # dep ensure
+	if [ $# -gt 0 ]; then
+        godep ensure $1 $2 $3 $4 $5 $6 $7 $8 || exit 0
+    else 
+        godep ensure -v || exit 0
+    fi
+}
+
+
 goUpdate(){
     go get -u github.com/gwaylib/goget
+    go get -u github.com/gwaylib/godep/cmd/godep
+
+    # do godep
+    depEnsure --update -v || exit 0
+
 	# go get -u package
 	if [ $# -gt 0 ]; then
-		goget -insecure -d -v -u $1 $2 $3 $4 $5 $6 $7 $8 || exit 1
+		goget -insecure -d -v -u $1 $2 $3 $4 $5 $6 $7 $8 || exit 0
 	else
-		goget -insecure -d -v -u || exit 1
+		goget -insecure -d -v -u || exit 0
 	fi
 }
 
@@ -164,6 +187,13 @@ buildApp() {
 	goBuild $*
 }
 
+# 下载最新依赖编译程序
+# 需进入当前目录才能编译
+ensureApp(){
+	resetCfgName
+	echo '#' "Doing dep ensure ($cfg_name) $1 $2 $3 $4 $5 $6 $7 $8"
+	depEnsure $*
+}
 # 下载最新依赖编译程序
 # 需进入当前目录才能编译
 getApp(){
@@ -209,13 +239,13 @@ installApp() {
 	sudo bash -c "echo "stdout_logfile=$sup_log_dir/$cfg_name.logfile.stdout" >> $sup_etc_dir/$cfg_name.conf"
 	sudo bash -c "echo "stdout_logfile_maxbytes=$sup_log_size" >> $sup_etc_dir/$cfg_name.conf"
 	sudo bash -c "echo "stdout_logfile_backups=$sup_log_bak" >> $sup_etc_dir/$cfg_name.conf"
-	sudo bash -c "echo "stdout_capture=$PJ_ROOT/var/log/$cfg_name.captuer.stdout" >> $sup_etc_dir/$cfg_name.conf"
+	sudo bash -c "echo "stdout_capture=$GOSPACE/var/log/$cfg_name.captuer.stdout" >> $sup_etc_dir/$cfg_name.conf"
 	sudo bash -c "echo "stdout_capture_maxbytes=$sup_log_size" >> $sup_etc_dir/$cfg_name.conf"
 	sudo bash -c "echo "stdout_capture_backups=$sup_log_bak" >> $sup_etc_dir/$cfg_name.conf"
 	sudo bash -c "echo "stderr_logfile=$sup_log_dir/$cfg_name.logfile.stderr" >> $sup_etc_dir/$cfg_name.conf"
 	sudo bash -c "echo "stderr_logfile_maxbytes=$sup_log_size" >> $sup_etc_dir/$cfg_name.conf"
 	sudo bash -c "echo "stderr_logfile_backups=$sup_log_bak" >> $sup_etc_dir/$cfg_name.conf"
-	sudo bash -c "echo "stderr_capture=$PJ_ROOT/var/log/$cfg_name.capture.stderr" >> $sup_etc_dir/$cfg_name.conf"
+	sudo bash -c "echo "stderr_capture=$GOSPACE/var/log/$cfg_name.capture.stderr" >> $sup_etc_dir/$cfg_name.conf"
 	sudo bash -c "echo "stderr_capture_maxbytes=$sup_log_size" >> $sup_etc_dir/$cfg_name.conf"
 	sudo bash -c "echo "stderr_capture_backups=$sup_log_bak" >> $sup_etc_dir/$cfg_name.conf"
 	sudo bash -c "echo "" >> $sup_etc_dir/$cfg_name.conf"
@@ -230,9 +260,9 @@ cleanApp(){
 
 	echo '#' "Cleaning ($cfg_name)"
         if [ -f "$sup_etc_dir/$cfg_name.conf" ]; then
-                callSup stop $cfg_name||exit 1
-                callSup remove $cfg_name||exit 1
-                sudo rm $sup_etc_dir/$cfg_name.conf||exit 1
+                callSup stop $cfg_name||exit 0
+                callSup remove $cfg_name||exit 0
+                sudo rm $sup_etc_dir/$cfg_name.conf||exit 0
         fi
 }
 
@@ -242,36 +272,36 @@ publishApp(){
 	echo '#' "Publishing $cfg_name to $pub_dir"
 	
 	mkdir -p $pub_dir/bin
-	cp -rf $PJ_ROOT/env.bash $pub_dir/||exit 1
-	cp -rf $(dirname $0)/sup $pub_dir/bin/||exit 1
+	cp -rf $GOSPACE/env.bash $pub_dir/||exit 0
+	cp -rf $(dirname $0)/sup $pub_dir/bin/||exit 0
 
     if [ `uname` = "Darwin" ]
     then
-	    sed -i "" "s/sup_mode=\"src\"/sup_mode=\"pub\"/g" $pub_dir/bin/sup||exit 1
+	    sed -i "" "s/sup_mode=\"src\"/sup_mode=\"pub\"/g" $pub_dir/bin/sup||exit 0
     else
-	    sed -i "s/sup_mode=\"src\"/sup_mode=\"pub\"/g" $pub_dir/bin/sup||exit 1
+	    sed -i "s/sup_mode=\"src\"/sup_mode=\"pub\"/g" $pub_dir/bin/sup||exit 0
     fi
 
 	# collecting root directory
 	for d in $pub_root_res
 	do
-		if [ -d $PJ_ROOT/$d ]; then
-			mkdir -p $pub_dir/$d||exit 1
-			cp -rf $PJ_ROOT/$d $pub_dir/||exit 1
+		if [ -d $GOSPACE/$d ]; then
+			mkdir -p $pub_dir/$d||exit 0
+			cp -rf $GOSPACE/$d $pub_dir/||exit 0
 		fi
 	done
 	
 	# build app
-	goBuild $* || exit 1
-	rm -rf $pub_dir/src/$app_path||exit 1
-	mkdir -p $pub_dir/src/$app_path||exit 1
+	goBuild $* || exit 0
+	rm -rf $pub_dir/src/$app_path||exit 0
+	mkdir -p $pub_dir/src/$app_path||exit 0
 
 	# collecting for main app
-	cp $app_name $pub_dir/src/$app_path||exit 1
+	cp $app_name $pub_dir/src/$app_path||exit 0
 	for d in $pub_app_res
 	do
 		if [ -d $pwd_dir/$d ]; then
-			cp -rf $pwd_dir/$d $pub_dir/src/$app_path||exit 1
+			cp -rf $pwd_dir/$d $pub_dir/src/$app_path||exit 0
 		fi
 	done
 }
@@ -287,7 +317,7 @@ redoCmd(){
 		buildp=$SUP_BUILD_PATH
 		# Spec for publish
 		if [ "$1" = "publish" ]; then
-			rm -rf $pub_dir||exit 1
+			rm -rf $pub_dir||exit 0
 		fi
         	# rebuild args
         	args="$3 $4 $5 $6 $7 $8"
@@ -315,6 +345,9 @@ redoCmd(){
 	                	        ;;
 	                	"build")
 	                	        buildApp $args
+	                	        ;;
+	                	"ensure")
+	                	        ensureApp $args
 	                	        ;;
 	                	"get")
 	                	        getApp $args
@@ -345,7 +378,7 @@ case "$1" in
 		redoCmd $*
 		exit 0
 	;;
-	"build"|"get"|"update"|"publish")
+	"build"|"ensure"|"get"|"update"|"publish")
 		if [ "$sup_mode" == "pub" ]; then
 			echo '#' "Can not use the command in published mode"
 			exit 0
@@ -365,6 +398,9 @@ case "$1" in
        echo "sup update all -- 使用最新的库编译env.bash的\$SUP_BUILD_PATH路径下的程序"
        echo "sup build -- 编译程序, 支持go参数扩展"
        echo "sup build all -- 依次编译env.bash的\$SUP_BUILD_PATH路径下的程序"
+       echo ""
+       echo "以下依赖指令的扩展"
+       echo "sup ensure -- 同dep ensure"
        echo ""
        echo "以下是部署使用的指令："
        echo "sup status 查看当前工程的部署运作情况"
