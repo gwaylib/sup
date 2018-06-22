@@ -65,11 +65,10 @@ resetCfgName(){
 	fi
 	app_name="`basename $pwd_dir`"
 	app_path="${pwd_dir#\/*src\/}"
-    if [ -z $app_path ]; then
-	    cfg_name="$PJ_NAME.src"
-    else
-	    cfg_name="$PJ_NAME.${app_path//\//.}"
+    if [ "$app_path" = "$pwd_dir" ]; then
+	    app_path="src"
     fi
+	cfg_name="$PJ_NAME.${app_path//\//.}"
 }
 
 # call supevisorctl
@@ -144,8 +143,6 @@ goBuild(){
 goGet(){
     go get github.com/gwaylib/goget||exit 0
 
-    # do godep
-    depEnsure || exit 0
 	# go get package
 	if [ $# -gt 0 ]; then
 		goget -insecure -d -v $1 $2 $3 $4 $5 $6 $7 $8 || exit 0
@@ -202,9 +199,6 @@ depEnsure(){
 goUpdate(){
     go get -u github.com/gwaylib/goget||exit 0
     go get -u github.com/gwaylib/godep/cmd/godep||exit 0
-
-    # do godep
-    depEnsure --update -v || exit 0
 
 	# go get -u package
 	if [ $# -gt 0 ]; then
