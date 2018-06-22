@@ -28,16 +28,16 @@ pub_root="$GOSPACE/publish"
 pub_dir="$pub_root/$PJ_NAME"
 pub_root_res="etc"
 pub_app_res="res public"
-if [ !"$PUB_ROOT_RES" ] ; then
+if [ -n "$PUB_ROOT_RES" ] ; then
 	pub_root_res="$PUB_ROOT_RES"
 fi
-if [ !"$PUB_APP_RES" ] ; then
+if [ -n "$PUB_APP_RES" ] ; then
 	pub_app_res="$PUB_APP_RES"
 fi
 
 sup_mode="src"
 sup_etc_dir="/etc/supervisor/conf.d"
-if [ !"$SUP_ETC_DIR" ] ; then
+if [ -n "$SUP_ETC_DIR" ] ; then
 	sup_etc_dir="$SUP_ETC_DIR"
 fi
 if [ "${sup_etc_dir: -1}" = "/" ]; then
@@ -46,15 +46,15 @@ fi
 sup_log_dir="$GOSPACE/var/log"
 mkdir -p $sup_log_dir
 sup_log_size="1MB"
-if [ !"$SUP_LOG_SIZE" ] ; then
+if [ -n "$SUP_LOG_SIZE" ] ; then
         sup_log_size="$SUP_LOG_SIZE"
 fi
 sup_log_bak="10"
-if [ !"$SUP_LOG_BAK" ] ; then
+if [ -n "$SUP_LOG_BAK" ] ; then
         sup_log_bak="$SUP_LOG_BAK"
 fi
 sup_app_env="GOSPACE=\\\"$GOSPACE\\\",GIN_MODE=\\\"release\\\",LD_LIBRARY_PATH=\\\"$LD_LIBRARY_PATH\\\""
-if [ !"$SUP_APP_ENV" ] ; then
+if [ -n "$SUP_APP_ENV" ] ; then
         sup_app_env="$SUP_APP_ENV"
 fi
 
@@ -65,7 +65,7 @@ resetCfgName(){
 	fi
 	app_name="`basename $pwd_dir`"
 	app_path="${pwd_dir#\/*src\/}"
-    if [ !"app_path" ]; then
+    if [ -z $app_path ]; then
 	    cfg_name="$PJ_NAME.src"
     else
 	    cfg_name="$PJ_NAME.${app_path//\//.}"
@@ -113,6 +113,7 @@ tailApp(){
    		callSup tail $cfg_name
 	fi
 }
+
 tailfApp(){
 	resetCfgName
 	if [ $# -gt 0 ]; then
@@ -153,6 +154,40 @@ goGet(){
 	fi
 }
 
+depInit(){
+    gopkgFile="$GOSPACE/src/Gopkg.toml"
+    if [ -f $gopkgFile ]; then
+        echo "$gopkgFile already exist, do 'sup ensure' to fix dependence"
+        exit 0
+    fi
+
+    # create example
+    echo ''>$gopkgFile
+    echo '# Gopkg.toml example'>>$gopkgFile
+    echo '#'>>$gopkgFile
+    echo '# Refer to https://github.com/golang/dep/blob/master/docs/Gopkg.toml.md'>>$gopkgFile
+    echo '# for detailed Gopkg.toml documentation.'>>$gopkgFile
+    echo '#'>>$gopkgFile
+    echo '# required = ["github.com/user/thing/cmd/thing"]'>>$gopkgFile
+    echo '# ignored = ["github.com/user/project/pkgX", "bitbucket.org/user/project/pkgA/pkgY"]'>>$gopkgFile
+    echo '#'>>$gopkgFile
+    echo '# [[constraint]]'>>$gopkgFile
+    echo '#   name = "github.com/user/project"'>>$gopkgFile
+    echo '#   version = "1.0.0"'>>$gopkgFile
+    echo '#'>>$gopkgFile
+    echo '# [[constraint]]'>>$gopkgFile
+    echo '#   name = "github.com/user/project2"'>>$gopkgFile
+    echo '#   branch = "dev"'>>$gopkgFile
+    echo '#   source = "github.com/myfork/project2"'>>$gopkgFile
+    echo '#'>>$gopkgFile
+    echo '# [[override]]'>>$gopkgFile
+    echo '#  name = "github.com/x/y"'>>$gopkgFile
+    echo '#  version = "2.4.0"'>>$gopkgFile
+    echo '#'>>$gopkgFile
+    echo "dep file:$gopkgFile created"
+
+}
+
 depEnsure(){
     go get github.com/gwaylib/godep/cmd/godep||exit 0
     # dep ensure
@@ -187,13 +222,14 @@ buildApp() {
 	goBuild $*
 }
 
-# 下载最新依赖编译程序
-# 需进入当前目录才能编译
+
+# 构建依赖
 ensureApp(){
 	resetCfgName
 	echo '#' "Doing dep ensure ($cfg_name) $1 $2 $3 $4 $5 $6 $7 $8"
 	depEnsure $*
 }
+
 # 下载最新依赖编译程序
 # 需进入当前目录才能编译
 getApp(){
@@ -346,6 +382,9 @@ redoCmd(){
 	                	"build")
 	                	        buildApp $args
 	                	        ;;
+	                	"init")
+	                	        depInit $args
+	                	        ;;
 	                	"ensure")
 	                	        ensureApp $args
 	                	        ;;
@@ -378,7 +417,7 @@ case "$1" in
 		redoCmd $*
 		exit 0
 	;;
-	"build"|"ensure"|"get"|"update"|"publish")
+	"build"|"init"|"ensure"|"get"|"update"|"publish")
 		if [ "$sup_mode" == "pub" ]; then
 			echo '#' "Can not use the command in published mode"
 			exit 0
@@ -400,6 +439,7 @@ case "$1" in
        echo "sup build all -- 依次编译env.bash的\$SUP_BUILD_PATH路径下的程序"
        echo ""
        echo "以下依赖指令的扩展"
+       echo "sup init -- 同dep init，但这里仅生成Gopkg.toml文件，需要进一步编辑后再执行sup ensure"
        echo "sup ensure -- 同dep ensure"
        echo ""
        echo "以下是部署使用的指令："
