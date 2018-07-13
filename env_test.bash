@@ -3,8 +3,8 @@
 # 环境变量配置例子
 
 # 配置项目环境变量
-export PJ_NAME="goapp" # 配置项目名称
-export GOSPACE=`pwd` # 配置项目工作路径
+export PRJ_NAME="goapp" # 配置项目名称
+export PRJ_ROOT=`pwd` # 配置项目工作路径
 # -------------------------------------------------
 
 # 以下是部署时的supervisor默认配置数据，若未配置时，会使用以下默认数据
@@ -16,10 +16,10 @@ export SUP_LOG_SIZE="10MB"
 # 配置supervisor的子程序日志的最多文件个数
 export SUP_LOG_BAK="10"
 # 配置supervisor配置中的environment环境变量
-export SUP_APP_ENV="GOSPACE=\\\"$GOSPACE\\\",GIN_MODE=\\\"release\\\",LD_LIBRARY_PATH=\\\"$LD_LIBRARY_PATH\\\""
+export SUP_APP_ENV="PRJ_ROOT=\\\"$PRJ_ROOT\\\",GIN_MODE=\\\"release\\\",LD_LIBRARY_PATH=\\\"$LD_LIBRARY_PATH\\\""
 # 设定全编译或打包时的目录,用于sup [command] all 时的寻找路径
 # 例如：sup build all, sup install all, sup restart all等
 # 请配置实际项目中的路径
-export SUP_BUILD_PATH="$GOSPACE/src/app $GOSPACE/src/web"
+export SUP_BUILD_PATH="$PRJ_ROOT/src/app $PRJ_ROOT/src/web"
 # -------------------------------------------------
 

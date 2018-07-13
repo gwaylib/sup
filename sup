@@ -4,12 +4,12 @@
 sup_ver="v3"
 
 # 检查依赖
-if [ -z "$PJ_NAME" ]; then
-    echo "\$PJ_NAME NOT FOUND"
+if [ -z "$PRJ_NAME" ]; then
+    echo "\$PRJ_NAME NOT FOUND"
     exit 0
 fi
-if [ -z "$GOSPACE" ]; then
-    echo "\$GOSPACE NOT FOUND"
+if [ -z "$PRJ_ROOT" ]; then
+    echo "\$PRJ_ROOT NOT FOUND"
     exit 0
 fi
 
@@ -22,10 +22,10 @@ fi
 app_name="`basename $pwd_dir`"
 app_path="${pwd_dir#\/*src\/}"
 
-cfg_name="$PJ_NAME.${app_path//\//.}"
+cfg_name="$PRJ_NAME.${app_path//\//.}"
 
-pub_root="$GOSPACE/publish"
-pub_dir="$pub_root/$PJ_NAME"
+pub_root="$PRJ_ROOT/publish"
+pub_dir="$pub_root/$PRJ_NAME"
 pub_root_res="etc"
 pub_app_res="res public"
 if [ -n "$PUB_ROOT_RES" ] ; then
@@ -43,7 +43,7 @@ fi
 if [ "${sup_etc_dir: -1}" = "/" ]; then
 	sup_etc_dir="${sup_etc_dir%?}"
 fi
-sup_log_dir="$GOSPACE/var/log"
+sup_log_dir="$PRJ_ROOT/var/log"
 mkdir -p $sup_log_dir
 sup_log_size="1MB"
 if [ -n "$SUP_LOG_SIZE" ] ; then
@@ -53,7 +53,7 @@ sup_log_bak="10"
 if [ -n "$SUP_LOG_BAK" ] ; then
         sup_log_bak="$SUP_LOG_BAK"
 fi
-sup_app_env="GOSPACE=\\\"$GOSPACE\\\",GIN_MODE=\\\"release\\\",LD_LIBRARY_PATH=\\\"$LD_LIBRARY_PATH\\\""
+sup_app_env="PRJ_ROOT=\\\"$PRJ_ROOT\\\",GIN_MODE=\\\"release\\\",LD_LIBRARY_PATH=\\\"$LD_LIBRARY_PATH\\\""
 if [ -n "$SUP_APP_ENV" ] ; then
         sup_app_env="$SUP_APP_ENV"
 fi
@@ -68,7 +68,7 @@ resetCfgName(){
     if [ "$app_path" = "$pwd_dir" ]; then
 	    app_path="src"
     fi
-	cfg_name="$PJ_NAME.${app_path//\//.}"
+	cfg_name="$PRJ_NAME.${app_path//\//.}"
 }
 
 # call supevisorctl
@@ -127,7 +127,7 @@ supStatus(){
 	echo "======================================================="
 	echo "Using sup to manage process"
 	echo "======================================================="
-	callSup status|grep $PJ_NAME[.]
+	callSup status|grep $PRJ_NAME[.]
 	echo "======================================================="
 }
 
@@ -152,7 +152,7 @@ goGet(){
 }
 
 depInit(){
-    gopkgFile="$GOSPACE/src/Gopkg.toml"
+    gopkgFile="$PRJ_ROOT/src/Gopkg.toml"
     if [ -f $gopkgFile ]; then
         echo "$gopkgFile already exist, do 'sup ensure' to fix dependence"
         exit 0
@@ -269,13 +269,13 @@ installApp() {
 	sudo bash -c "echo "stdout_logfile=$sup_log_dir/$cfg_name.logfile.stdout" >> $sup_etc_dir/$cfg_name.conf"
 	sudo bash -c "echo "stdout_logfile_maxbytes=$sup_log_size" >> $sup_etc_dir/$cfg_name.conf"
 	sudo bash -c "echo "stdout_logfile_backups=$sup_log_bak" >> $sup_etc_dir/$cfg_name.conf"
-	sudo bash -c "echo "stdout_capture=$GOSPACE/var/log/$cfg_name.captuer.stdout" >> $sup_etc_dir/$cfg_name.conf"
+	sudo bash -c "echo "stdout_capture=$PRJ_ROOT/var/log/$cfg_name.captuer.stdout" >> $sup_etc_dir/$cfg_name.conf"
 	sudo bash -c "echo "stdout_capture_maxbytes=$sup_log_size" >> $sup_etc_dir/$cfg_name.conf"
 	sudo bash -c "echo "stdout_capture_backups=$sup_log_bak" >> $sup_etc_dir/$cfg_name.conf"
 	sudo bash -c "echo "stderr_logfile=$sup_log_dir/$cfg_name.logfile.stderr" >> $sup_etc_dir/$cfg_name.conf"
 	sudo bash -c "echo "stderr_logfile_maxbytes=$sup_log_size" >> $sup_etc_dir/$cfg_name.conf"
 	sudo bash -c "echo "stderr_logfile_backups=$sup_log_bak" >> $sup_etc_dir/$cfg_name.conf"
-	sudo bash -c "echo "stderr_capture=$GOSPACE/var/log/$cfg_name.capture.stderr" >> $sup_etc_dir/$cfg_name.conf"
+	sudo bash -c "echo "stderr_capture=$PRJ_ROOT/var/log/$cfg_name.capture.stderr" >> $sup_etc_dir/$cfg_name.conf"
 	sudo bash -c "echo "stderr_capture_maxbytes=$sup_log_size" >> $sup_etc_dir/$cfg_name.conf"
 	sudo bash -c "echo "stderr_capture_backups=$sup_log_bak" >> $sup_etc_dir/$cfg_name.conf"
 	sudo bash -c "echo "" >> $sup_etc_dir/$cfg_name.conf"
@@ -302,7 +302,7 @@ publishApp(){
 	echo '#' "Publishing $cfg_name to $pub_dir"
 	
 	mkdir -p $pub_dir/bin
-	cp -rf $GOSPACE/env.bash $pub_dir/||exit 0
+	cp -rf $PRJ_ROOT/env.bash $pub_dir/||exit 0
 	cp -rf $(dirname $0)/sup $pub_dir/bin/||exit 0
 
     if [ `uname` = "Darwin" ]
@@ -315,9 +315,9 @@ publishApp(){
 	# collecting root directory
 	for d in $pub_root_res
 	do
-		if [ -d $GOSPACE/$d ]; then
+		if [ -d $PRJ_ROOT/$d ]; then
 			mkdir -p $pub_dir/$d||exit 0
-			cp -rf $GOSPACE/$d $pub_dir/||exit 0
+			cp -rf $PRJ_ROOT/$d $pub_dir/||exit 0
 		fi
 	done
 	
