@@ -35,17 +35,23 @@ sup_etc_dir="/etc/supervisor/conf.d"
 if [ -n "$SUP_ETC_DIR" ] ; then
     sup_etc_dir="$SUP_ETC_DIR"
 else
-    sysname=`lsb_release -is` > /dev/null
-    case $sysname in
-        "Debian")
-            sup_etc_dir="/etc/supervisor/conf.d/"
-            ;;
-        "CentOS")
-            sup_etc_dir="/etc/supervisord.d/"
-            ;;
-        # TODO:自动识别更多的版本
+    # 自动判断操作系统
+    case `uname` in
+        "Linux")
+            sysname=`lsb_release -is` > /dev/null
+            case $sysname in
+                "Debian")
+                    sup_etc_dir="/etc/supervisor/conf.d/"
+                    ;;
+                "CentOS")
+                    sup_etc_dir="/etc/supervisord.d/"
+                    ;;
+                # TODO:自动识别更多的版本
+            esac
+        ;;
     esac
 fi
+
 if [ "$(awk -v s=$sup_etc_dir 'BEGIN{print substr(s,length(s),1)}')" = "/" ]; then
     sup_etc_dir="${sup_etc_dir%?}"
 fi
