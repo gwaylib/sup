@@ -168,34 +168,42 @@ goGet(){
 
 depInit(){
     gopkgFile="$PRJ_ROOT/src/Gopkg.toml"
+    # 判定是否初始化过
     if [ -f $gopkgFile ]; then
-        echo "$gopkgFile already exist, do 'sup ensure' to fix dependence"
-        exit 0
+        return;
     fi
 
     # create example
-    echo ''>$gopkgFile
-    echo '# Gopkg.toml example'>>$gopkgFile
-    echo '#'>>$gopkgFile
-    echo '# Refer to https://github.com/golang/dep/blob/master/docs/Gopkg.toml.md'>>$gopkgFile
-    echo '# for detailed Gopkg.toml documentation.'>>$gopkgFile
-    echo '#'>>$gopkgFile
-    echo '# required = ["github.com/user/thing/cmd/thing"]'>>$gopkgFile
-    echo '# ignored = ["github.com/user/project/pkgX", "bitbucket.org/user/project/pkgA/pkgY"]'>>$gopkgFile
-    echo '#'>>$gopkgFile
-    echo '# [[constraint]]'>>$gopkgFile
-    echo '#   name = "github.com/user/project"'>>$gopkgFile
-    echo '#   version = "1.0.0"'>>$gopkgFile
-    echo '#'>>$gopkgFile
-    echo '# [[constraint]]'>>$gopkgFile
-    echo '#   name = "github.com/user/project2"'>>$gopkgFile
-    echo '#   branch = "dev"'>>$gopkgFile
-    echo '#   source = "github.com/myfork/project2"'>>$gopkgFile
-    echo '#'>>$gopkgFile
-    echo '# [[override]]'>>$gopkgFile
-    echo '#  name = "github.com/x/y"'>>$gopkgFile
-    echo '#  version = "2.4.0"'>>$gopkgFile
-    echo '#'>>$gopkgFile
+    echo '
+# Gopkg.toml example
+#
+# Refer to https://github.com/golang/dep/blob/master/docs/Gopkg.toml.md
+# for detailed Gopkg.toml documentation.
+#
+# required = ["github.com/user/thing/cmd/thing"]
+# ignored = ["github.com/user/project/pkgX", "bitbucket.org/user/project/pkgA/pkgY"]
+#
+# [[constraint]]
+#   name = "github.com/user/project"
+#   version = "1.0.0"
+#
+# [[constraint]]
+#   name = "github.com/user/project2"
+#   branch = "dev"
+#   source = "github.com/myfork/project2"
+#
+# [[override]]
+#  name = "github.com/x/y"
+#  version = "2.4.0"
+#
+# for golang.org/x, using goget to get.
+ignored=[
+    "golang.org/x/net*", 
+    "golang.org/x/sys*",
+    "golang.org/x/crypto*",
+    "google.golang.org/appengine/cloudsql"
+    ]
+'>>$gopkgFile
     echo "dep file:$gopkgFile created"
 }
 
@@ -233,6 +241,8 @@ buildApp() {
 
 # 构建依赖
 ensureApp(){
+    depInit $args
+
     resetCfgName
     echo '#' "Doing dep ensure ($cfg_name) $1 $2 $3 $4 $5 $6 $7 $8"
     depEnsure $*
@@ -390,12 +400,9 @@ redoCmd(){
                  "build")
                          buildApp $args
                          ;;
-                 "init")
-                         depInit $args
-                         ;;
                  "ensure")
-                         ensureApp $args
-                         ;;
+                        ensureApp $args
+                        ;;
                  "get")
                          getApp $args
                          ;;
@@ -446,9 +453,9 @@ case "$1" in
        echo "sup build -- 编译程序, 支持go参数扩展"
        echo "sup build all -- 依次编译env.sh的\$BUILD_ALL_PATH路径下的程序"
        echo ""
-       echo "以下依赖指令的扩展"
-       echo "sup init -- 同dep init，但这里仅生成Gopkg.toml文件，需要进一步编辑后再执行sup ensure"
-       echo "sup ensure -- 同dep ensure"
+       echo "以下依赖管理的指令的扩展"
+       echo "sup ensure -- 下载依赖或初始化依赖，若未初始化过，则执行初始化工作，同dep init || dep ensure"
+       echo "sup ensure -update -- 更新依赖，同dep ensure --update。单个包更新：sup ensure -udpate pkg"
        echo ""
        echo "以下是部署使用的指令："
        echo "sup status 查看当前工程的部署运作情况"

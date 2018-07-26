@@ -13,11 +13,13 @@ https://github.com/gwaycc/goapp
 因依赖于supervisor,发布前请安装supevisor并设置好相关环境变量，默认为debian下的环境
 
 库版本管理
-使用gopkg.in的版本管理方式
-使用goget指令进行管理，该指令比go get增加了本地重定向库的能力，详情.goget
-例如：sup get gopkg.in/yaml.v1
+库的版本管理便用改版过的官方dep与官方go get来进行管理。
 
-关于vendor的使用
-TODO:考虑下一步集成vendor的能力, 当前请使用第三方工具，如https://github.com/golang/dep
+vendor库管理
+sup ensure -- 初始化或初始下vendor文件
+sup ensure -update 更新整个vendor文件
+sup ensure -update pkg_name 更新单个包文件
 
+$GOLIB公共库管理
+使用goget指令进行管理，该指令比go get增加了本地重定向库的能力，重定向能力需配置.goget文件
 
