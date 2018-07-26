@@ -432,7 +432,7 @@ case "$1" in
         redoCmd $*
         exit 0
     ;;
-    "build"|"init"|"ensure"|"get"|"update"|"publish")
+    "build"|"ensure"|"get"|"update"|"publish")
         if [ "$sup_mode" = "pub" ]; then
             echo '#' "Can not use the command in published mode"
             exit 0

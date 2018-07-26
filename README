@@ -21,6 +21,11 @@ sup ensure -- 初始化或初始下vendor文件
 sup ensure -update 更新整个vendor文件
 sup ensure -update pkg_name 更新单个包文件
 
+* 执行初始化后，以下三个文件或目录应纳入当前版本库管理中
+src/Gopkg.lock
+src/Gopkg.toml
+src/vendor/
+
 $GOLIB公共库管理
 使用goget指令进行管理，该指令比go get增加了本地重定向库的能力，重定向能力需配置.goget文件
 
