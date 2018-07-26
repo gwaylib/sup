@@ -443,7 +443,7 @@ case "$1" in
 
     ""|"help")
         # TODO:英文化
-       echo "此脚本集成go与supervisord来管理当前项目发布的程序，以下常用管理指令，以下指令之外的请使用源程序"
+       echo "此脚本集成go、dep、supervisor来管理项目，以下常用管理指令，以下指令之外的请使用源程序指令构建补充"
        echo ""
        echo "以下是编译使用的指令："
        echo "sup get # 下载当前目录下的go get依赖, 相当于go get -v"
@@ -453,7 +453,7 @@ case "$1" in
        echo "sup build # 编译当前目录的main程序, 相当于go build"
        echo "sup build all # 依次编译env.sh的\$BUILD_ALL_PATH路径下的程序"
        echo ""
-       echo "以下vendor依赖管理的指令的扩展"
+       echo "以下是管理vendor依赖的指令"
        echo "sup ensure # 下载依赖或初始化依赖，若未初始化过，则执行初始化工作，同dep init || dep ensure"
        echo "sup ensure -update # 更新依赖，同dep ensure --update。单个包更新：sup ensure -udpate pkg"
        echo ""
@@ -474,7 +474,6 @@ case "$1" in
        echo "sup tail [\$cfg_name stdout] # 查看当前目录[应用]状态0的控制台输出，等价于 supervisorctrl tail \$cfg_name stdout"
        echo "sup tailf [\$cfg_name stdout] # 查看当前目录[应用]状态0的控制台输出，等价于 supervisorctrl tail -f \$cfg_name stdout"
        echo ""
-       echo "supervisord管理命令请参考supervisorctl help"
        exit 0
     ;;
     "status")
