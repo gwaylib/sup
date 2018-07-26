@@ -7,6 +7,7 @@ https://github.com/gwaycc/goapp
 系统集成::
 集成了go build编译指令;
 重写了go get指令为goget，支持本地重定向库的能力;
+重写了dep指令为godep，用于管理vendor目录;
 集成了supervisorctl守护管理常用指令, 使用supervisor部署程序;
 
 使用环境：
