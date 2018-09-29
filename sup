@@ -197,12 +197,12 @@ depInit(){
 #  version = "2.4.0"
 #
 # for golang.org/x, using goget to get.
-ignored=[
-    "golang.org/x/net*", 
-    "golang.org/x/sys*",
-    "golang.org/x/crypto*",
-    "google.golang.org/appengine/cloudsql"
-    ]
+# ignored=[
+#     "golang.org/x/net*", 
+#     "golang.org/x/sys*",
+#     "golang.org/x/crypto*",
+#     "google.golang.org/appengine/cloudsql"
+#     ]
 '>>$gopkgFile
     echo "dep file:$gopkgFile created"
 }
