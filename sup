@@ -344,7 +344,7 @@ publishApp(){
     # 创建固定的配置文件目录
     if [ -d $PRJ_ROOT/$pub_etc_dir ]; then
         mkdir -p $pub_dir/etc # 固定目录
-        cp -rf $PRJ_ROOT/$pub_etc_dir $pub_dir/etc/|| exit 0
+        cp -rfa $PRJ_ROOT/$pub_etc_dir/* $pub_dir/etc/|| exit 0
     fi
 
     # 收集根目录下的配置文件
