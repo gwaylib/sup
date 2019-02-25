@@ -3,7 +3,6 @@
 # sup version
 sup_ver="v3"
 
-GO111MODULE=on
 GOPROXY=https://goproxy.io # GOPROXY ON
 
 # 检查依赖
