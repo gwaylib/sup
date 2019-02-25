@@ -3,7 +3,7 @@
 # sup version
 sup_ver="v3"
 
-GOPROXY=https://goproxy.io # GOPROXY ON
+export GOPROXY=https://goproxy.io # GOPROXY ON
 
 # 检查依赖
 if [ -z "$PRJ_NAME" ]; then
