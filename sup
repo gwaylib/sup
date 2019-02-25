@@ -3,6 +3,9 @@
 # sup version
 sup_ver="v3"
 
+GO111MODULE=on
+GOPROXY=https://goproxy.io # GOPROXY ON
+
 # 检查依赖
 if [ -z "$PRJ_NAME" ]; then
     echo "\$PRJ_NAME NOT FOUND"
@@ -160,13 +163,11 @@ goBuild(){
 }
 
 goGet(){
-    go get github.com/gwaylib/goget||exit 0
-
     # go get package
     if [ $# -gt 0 ]; then
-        goget -insecure -d -v $1 $2 $3 $4 $5 $6 $7 $8 || exit 0
+        go get -insecure -d -v $1 $2 $3 $4 $5 $6 $7 $8 || exit 0
     else
-        goget -insecure -d -v || exit 0
+        go get -insecure -d -v || exit 0
     fi
 }
 
@@ -200,7 +201,7 @@ depInit(){
 #  name = "github.com/x/y"
 #  version = "2.4.0"
 #
-# for golang.org/x, using goget to get.
+# for golang.org/x, using go get to get.
 # ignored=[
 #     "golang.org/x/net*", 
 #     "golang.org/x/sys*",
@@ -223,14 +224,13 @@ depEnsure(){
 
 
 goUpdate(){
-    go get -u github.com/gwaylib/goget||exit 0
     go get -u github.com/gwaylib/godep/cmd/godep||exit 0
 
     # go get -u package
     if [ $# -gt 0 ]; then
-        goget -insecure -d -v -u $1 $2 $3 $4 $5 $6 $7 $8 || exit 0
+        go get -insecure -d -v -u $1 $2 $3 $4 $5 $6 $7 $8 || exit 0
     else
-        goget -insecure -d -v -u || exit 0
+        go get -insecure -d -v -u || exit 0
     fi
 }
 
