@@ -328,6 +328,12 @@ redoCmd(){
         fi
         # rebuild args
         args="$3 $4 $5 $6 $7 $8"
+
+        case "$1" in
+            "-noproxy") # no use goproxy
+                export GOPROXY=""
+                ;;
+        esac
     fi
     
     for a in $buildp
@@ -402,9 +408,9 @@ case "$1" in
        echo "sup get # 下载当前目录下的go get依赖, 相当于go get -v"
        echo "sup get all # 依次下载env.sh的\$BUILD_ALL_PATH路径下的go get依赖"
        echo "sup update # 更新当前目录下的go get依赖，相当于go get -v -u"
-       echo "sup update all # 使用最新的库编译env.sh的\$BUILD_ALL_PATH路径下的程序"
+       echo "sup update all [-noproxy] # 使用最新的库编译env.sh的\$BUILD_ALL_PATH路径下的程序"
        echo "sup build # 编译当前目录的main程序, 相当于go build"
-       echo "sup build all # 依次编译env.sh的\$BUILD_ALL_PATH路径下的程序"
+       echo "sup build all [-noproxy] # 依次编译env.sh的\$BUILD_ALL_PATH路径下的程序"
        echo ""
        echo "以下是管理依赖的指令"
        echo "sup mod # 下载依赖或初始化依赖，若未初始化过，则执行初始化工作，同go mod"
