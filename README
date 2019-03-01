@@ -5,30 +5,10 @@ go项目发布管理工具
 https://github.com/gwaycc/goapp
 
 系统集成::
-集成了go build编译指令;
-重写了go get指令为goget，支持本地重定向库的能力;
-重写了dep指令为godep，用于管理vendor目录;
+集成了go指令，默认使用GOPROXY;
 集成了supervisorctl守护管理常用指令, 使用supervisor部署程序;
 
 使用环境：
+依赖go1.12以及上版本
 因依赖于supervisor,发布前请安装supevisor并设置好相关环境变量，默认为debian下的环境
 
-库版本管理
-库的版本管理便用改版过的官方dep与官方go get来进行管理。
-
-vendor库管理
-cd $PRJ_ROOT/src # 进入源码根目录
-sup ensure # 初始化或初始下vendor文件
-sup ensure -update # 更新整个vendor文件
-sup ensure -update pkg_name # 更新单个包文件
-
-* 执行初始化后，以下三个文件或目录应纳入当前版本库管理中
-src/Gopkg.lock
-src/Gopkg.toml
-src/vendor/
-
-$GOLIB公共库管理
-使用goget指令进行管理，该指令比go get增加了本地重定向库的能力，重定向能力需配置.goget文件
-
-TODO:
-项目解决godep中go-import重定向的问题

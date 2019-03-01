@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # sup version
-sup_ver="v3"
+sup_ver="v4"
 
 export GOPROXY=https://goproxy.io # GOPROXY ON
 
@@ -170,61 +170,7 @@ goGet(){
     fi
 }
 
-depInit(){
-    gopkgFile="$PRJ_ROOT/src/Gopkg.toml"
-    # 判定是否初始化过
-    if [ -f $gopkgFile ]; then
-        return;
-    fi
-
-    # create example
-    echo '
-# Gopkg.toml example
-#
-# Refer to https://github.com/golang/dep/blob/master/docs/Gopkg.toml.md
-# for detailed Gopkg.toml documentation.
-#
-# required = ["github.com/user/thing/cmd/thing"]
-# ignored = ["github.com/user/project/pkgX", "bitbucket.org/user/project/pkgA/pkgY"]
-#
-# [[constraint]]
-#   name = "github.com/user/project"
-#   version = "1.0.0"
-#
-# [[constraint]]
-#   name = "github.com/user/project2"
-#   branch = "dev"
-#   source = "github.com/myfork/project2"
-#
-# [[override]]
-#  name = "github.com/x/y"
-#  version = "2.4.0"
-#
-# for golang.org/x, using go get to get.
-# ignored=[
-#     "golang.org/x/net*", 
-#     "golang.org/x/sys*",
-#     "golang.org/x/crypto*",
-#     "google.golang.org/appengine/cloudsql"
-#     ]
-'>>$gopkgFile
-    echo "dep file:$gopkgFile created"
-}
-
-depEnsure(){
-    go get -u github.com/gwaylib/godep/cmd/godep||exit 0
-    # dep ensure
-    if [ $# -gt 0 ]; then
-        godep ensure $1 $2 $3 $4 $5 $6 $7 $8 || exit 0
-    else 
-        godep ensure -v || exit 0
-    fi
-}
-
-
 goUpdate(){
-    go get -u github.com/gwaylib/godep/cmd/godep||exit 0
-
     # go get -u package
     if [ $# -gt 0 ]; then
         go get -insecure -d -v -u $1 $2 $3 $4 $5 $6 $7 $8 || exit 0
@@ -243,12 +189,10 @@ buildApp() {
 
 
 # 构建依赖
-ensureApp(){
-    depInit $args
-
+modApp(){
     resetCfgName
-    echo '#' "Doing dep ensure ($cfg_name) $1 $2 $3 $4 $5 $6 $7 $8"
-    depEnsure $*
+    echo '#' "Doing go mod ($cfg_name) $1 $2 $3 $4 $5 $6 $7 $8"
+    go mod $*
 }
 
 # 下载最新依赖编译程序
@@ -409,8 +353,8 @@ redoCmd(){
                  "build")
                          buildApp $args
                          ;;
-                 "ensure")
-                        ensureApp $args
+                 "mod")
+                        modApp $args
                         ;;
                  "get")
                          getApp $args
@@ -441,7 +385,7 @@ case "$1" in
         redoCmd $*
         exit 0
     ;;
-    "build"|"ensure"|"get"|"update"|"publish")
+    "build"|"mod"|"get"|"update"|"publish")
         if [ "$sup_mode" = "pub" ]; then
             echo '#' "Can not use the command in published mode"
             exit 0
@@ -452,7 +396,7 @@ case "$1" in
 
     ""|"help")
         # TODO:英文化
-       echo "此脚本集成go、dep、supervisor来管理项目，以下常用管理指令，以下指令之外的请使用源程序指令构建补充"
+       echo "此脚本集成go、mod、supervisor来管理项目，以下常用管理指令，以下指令之外的请使用源程序指令构建补充"
        echo ""
        echo "以下是编译使用的指令："
        echo "sup get # 下载当前目录下的go get依赖, 相当于go get -v"
@@ -462,9 +406,8 @@ case "$1" in
        echo "sup build # 编译当前目录的main程序, 相当于go build"
        echo "sup build all # 依次编译env.sh的\$BUILD_ALL_PATH路径下的程序"
        echo ""
-       echo "以下是管理vendor依赖的指令"
-       echo "sup ensure # 下载依赖或初始化依赖，若未初始化过，则执行初始化工作，同dep init || dep ensure"
-       echo "sup ensure -update # 更新依赖，同dep ensure --update。单个包更新：sup ensure -udpate pkg"
+       echo "以下是管理依赖的指令"
+       echo "sup mod # 下载依赖或初始化依赖，若未初始化过，则执行初始化工作，同go mod"
        echo ""
        echo "以下是部署使用的指令："
        echo "sup status 查看当前工程的部署运作情况"
