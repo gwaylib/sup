@@ -9,6 +9,8 @@ export PRJ_ROOT=`pwd` # 配置项目工作路径
 
 # 以下是部署时的supervisor默认配置数据，若未配置时，会使用以下默认数据
 # 开发IDE可不配置以下环境变量
+# 配置supervisor运行的用户，默认为当前用户
+export SUP_USER=$USER
 # 配置supervisor的配置文件目录
 export SUP_ETC_DIR="/etc/supervisor/conf.d/"
 # 配置supervisor的子程序日志的单个文件最大大小

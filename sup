@@ -24,24 +24,24 @@ cfg_end="conf"
 
 pub_root="$PRJ_ROOT/publish"
 pub_dir="$pub_root/$PRJ_NAME"
-pub_etc_dir="etc"
-if [ -n "$PUB_ETC_DIR" ] ; then
-    pub_etc_dir="$PUB_ETC_DIR"
+pub_etc_dir="$PUB_ETC_DIR"
+if [ -z "$PUB_ETC_DIR" ] ; then
+    pub_etc_dir="etc"
 fi
-pub_root_res=""
-if [ -n "$PUB_ROOT_RES" ] ; then
-    pub_root_res="$PUB_ROOT_RES"
-fi
-pub_app_res="res public"
-if [ -n "$PUB_APP_RES" ] ; then
-    pub_app_res="$PUB_APP_RES"
+pub_root_res="$PUB_ROOT_RES"
+pub_app_res="$PUB_APP_RES"
+if [ -z "$PUB_APP_RES" ] ; then
+    pub_app_res="res public"
 fi
 
 sup_mode="src"
-sup_etc_dir="/etc/supervisor/conf.d"
-if [ -n "$SUP_ETC_DIR" ] ; then
-    sup_etc_dir="$SUP_ETC_DIR"
-else
+sup_user=$SUP_USER
+if [ -z "$SUP_USER" ] ; then
+    sup_user=$USER
+fi
+sup_etc_dir="$SUP_ETC_DIR"
+if [ -z "$SUP_ETC_DIR" ] ; then
+    sup_etc_dir="/etc/supervisor/conf.d"
     # 自动判断操作系统
     case `uname` in
         "Linux")
@@ -223,7 +223,7 @@ installApp() {
     
     # build supervisor conf
     sudo mkdir -p $sup_etc_dir
-    if [ -f "$sup_etc_dir/$cfg_name.conf" ]; then
+    if [ -f "$sup_etc_dir/$cfg_name.$cfg_end" ]; then
         echo '#' "'$cfg_name' already exist, need clean at first"
         return 1
     fi
@@ -236,7 +236,7 @@ installApp() {
     echo '#' "Installing ($cfg_name)"
     # 设定supervisor的环境变量
     sudo sh -c "echo "[program:$cfg_name]" > $sup_etc_dir/$cfg_name.$cfg_end"
-    sudo sh -c "echo "user=$USER" >> $sup_etc_dir/$cfg_name.$cfg_end"
+    sudo sh -c "echo "user=$sup_user" >> $sup_etc_dir/$cfg_name.$cfg_end"
     sudo sh -c "echo "environment="$sup_app_env"" >> $sup_etc_dir/$cfg_name.$cfg_end"
     sudo sh -c "echo "command="$pwd_dir/$app_name $1 $2 $3 $4 $5 $6 $7 $8"" >> $sup_etc_dir/$cfg_name.$cfg_end"
     sudo sh -c "echo "autostart=true" >> $sup_etc_dir/$cfg_name.$cfg_end"
@@ -265,10 +265,10 @@ cleanApp(){
     resetCfgName
 
     echo '#' "Cleaning ($cfg_name)"
-    if [ -f "$sup_etc_dir/$cfg_name.conf" ]; then
+    if [ -f "$sup_etc_dir/$cfg_name.$cfg_end" ]; then
         callSup stop $cfg_name||exit 0
         callSup remove $cfg_name||exit 0
-        sudo rm $sup_etc_dir/$cfg_name.conf||exit 0
+        sudo rm $sup_etc_dir/$cfg_name.$cfg_end||exit 0
     fi
 }
 
@@ -328,7 +328,7 @@ redoCmd(){
     case "$2" in
         "all"|"all-noproxy")
             if [ "$2" = "all-noproxy" ] ; then
-                export GOPROXY="" # not use goproxy
+                export GOPROXY="" # use no goproxy
             fi
 
             buildp=$BUILD_ALL_PATH
@@ -410,13 +410,14 @@ case "$1" in
        echo "此脚本集成go、mod、supervisor来管理项目，以下常用管理指令，以下指令之外的请使用源程序指令构建补充"
        echo ""
        echo "以下是编译使用的指令："
-       echo "sup get # 下载当前目录下的go get依赖, 相当于go get -v"
-       echo "sup get all # 依次下载env.sh的\$BUILD_ALL_PATH路径下的go get依赖"
-       echo "sup update # 更新当前目录下的go get依赖，相当于go get -v -u"
-       echo "sup update all # 使用最新的库编译env.sh的\$BUILD_ALL_PATH路径下的程序"
+       echo "sup get # 使用GOPROXY下载当前目录下的go get依赖, 相当于GOPROXY=\"\" && go get -v"
+       echo "sup get all # 使用GOPROXY依次下载env.sh的\$BUILD_ALL_PATH路径下的go get依赖"
+       echo "sup get all-noproxy # 关闭GOPROXY依次下载env.sh的\$BUILD_ALL_PATH路径下的go get依赖"
+       echo "sup update # 使用GOPROXY更新当前目录下的go get依赖，相当于GORPOXY=\"\" && go get -v -u"
+       echo "sup update all # 使用GOPROXY使用最新的库编译env.sh的\$BUILD_ALL_PATH路径下的程序"
        echo "sup update all-noproxy # 关闭GOPROXY，使用最新的库编译env.sh的\$BUILD_ALL_PATH路径下的程序"
-       echo "sup build # 编译当前目录的main程序, 相当于go build"
-       echo "sup build all # 依次编译env.sh的\$BUILD_ALL_PATH路径下的程序"
+       echo "sup build # 使用GOPROXY编译当前目录的main程序, 相当于GOPROXY=\"\" && go build"
+       echo "sup build all # 使用GOPROXY依次编译env.sh的\$BUILD_ALL_PATH路径下的程序"
        echo "sup build all-noporxy # 关闭GOPROXY，依次编译env.sh的\$BUILD_ALL_PATH路径下的程序"
        echo ""
        echo "以下是管理依赖的指令"
@@ -425,11 +426,13 @@ case "$1" in
        echo "以下是部署使用的指令："
        echo "sup status 查看当前工程的部署运作情况"
        echo "sup install [app_args] # 安装当前目录程序的supervisor配置文件, 若运行时需要参数，请填写"
-       echo "sup install all # 安装env.sh的\$BUILD_ALL_PATH路径下程序的supervisor配置文件，该指令暂未支持运行参数传递"
+       echo "sup install all # 使用GOPROXY安装env.sh的\$BUILD_ALL_PATH路径下程序的supervisor配置文件，该指令暂未支持运行参数传递"
+       echo "sup install all-noproxy # 关闭GOPROXY安装env.sh的\$BUILD_ALL_PATH路径下程序的supervisor配置文件，该指令暂未支持运行参数传递"
        echo "sup clean # 清理当前目录的发布环境"
        echo "sup clean all # 依次清理env.sh的\$BUILD_ALL_PATH路径下的发布环境"
        echo "sup publish # 发布为非源码部署, 支持go build参数扩展"
-       echo "sup publish all # 依次发布env.sh的\$BUILD_ALL_PATH路径下的部署"
+       echo "sup publish all # 使用GOPROXY依次发布env.sh的\$BUILD_ALL_PATH路径下的部署"
+       echo "sup publish all-noproxy # 关闭GOPROXY依次发布env.sh的\$BUILD_ALL_PATH路径下的部署"
        echo "sup start # 启动当前目录的程序(supervisorctrl start \$cfg_name)"
        echo "sup start all # 依次启动env.sh的\$BUILD_ALL_PATH路径下的程序"
        echo "sup restart # 重启当前目录的程序(supervisorctrl restart \$cfg_name)"
