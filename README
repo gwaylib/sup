@@ -1,14 +1,18 @@
 
-go项目发布管理工具
+# go项目发布管理工具
 
-项目使用例子：
+## 项目使用例子：
 https://github.com/gwaycc/goapp
 
-系统集成::
+## 系统集成::
 集成了go指令，默认使用GOPROXY;
 集成了supervisorctl守护管理常用指令, 使用supervisor部署程序;
 
-使用环境：
-依赖go1.12以及上版本
-因依赖于supervisor,发布前请安装supevisor并设置好相关环境变量，默认为debian下的环境
+## 使用环境
+依赖go>=1.11
+依赖supervisor,发布前请安装supevisor并设置好相关环境变量，用例默认为debian下的环境
+
+## 主要用于解决的问题
+1) 翻墙编译。若go build(默认无代理)无法下载，请使用sup build(默认有代理)；若sup build无法下载，请使用go build；若还无法下载，请自行检查。
+2) 简单部署。此部署依赖于supervisor，请确保先安装(sudo aptitude install supervisor lsb-release)，然后sup build all && sup install all即可。
 
