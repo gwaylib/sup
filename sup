@@ -2,6 +2,7 @@
 
 # sup version
 sup_ver="v4"
+sup_mode="src" # src为源码模式，app为非源码模式
 
 export GOPROXY=https://goproxy.io # GOPROXY ON
 
@@ -18,7 +19,7 @@ fi
 # 环境变量配置
 pwd_dir=$PWD
 app_name="`basename $pwd_dir`"
-app_path="${pwd_dir#*/src/}"
+app_path="${pwd_dir#*/$sup_mod/}"
 cfg_name="$PRJ_NAME.$(awk -v s=$app_path 'BEGIN{gsub("/",".",s);print s}')"
 cfg_end="conf"
 
@@ -34,7 +35,6 @@ if [ -z "$PUB_APP_RES" ] ; then
     pub_app_res="res public"
 fi
 
-sup_mode="src"
 sup_user=$SUP_USER
 if [ -z "$SUP_USER" ] ; then
     sup_user=$USER
@@ -90,9 +90,9 @@ resetCfgName(){
         pwd_dir="$1"
     fi
     app_name="`basename $pwd_dir`"
-    app_path="${pwd_dir#\/*src\/}"
+    app_path="${pwd_dir#\/*$sup_mode\/}"
     if [ "$app_path" = "$pwd_dir" ]; then
-        app_path="src"
+        app_path="$sup_mode"
     fi
     cfg_name="$PRJ_NAME.$(awk -v s=$app_path 'BEGIN{gsub("/",".",s);print s}')"
 }
@@ -284,9 +284,9 @@ publishApp(){
     # 修改sup指令中的模式
     if [ `uname` = "Darwin" ]
     then
-        sed -i "" "s/sup_mode=\"src\"/sup_mode=\"pub\"/g" $pub_dir/bin/sup||exit 0
+        sed -i "" "s/sup_mode=\"src\"/sup_mode=\"app\"/g" $pub_dir/bin/sup||exit 0
     else
-        sed -i "s/sup_mode=\"src\"/sup_mode=\"pub\"/g" $pub_dir/bin/sup||exit 0
+        sed -i "s/sup_mode=\"src\"/sup_mode=\"app\"/g" $pub_dir/bin/sup||exit 0
     fi
 
     # 创建固定的配置文件目录
@@ -306,14 +306,14 @@ publishApp(){
     
     # 编译出可执行程序
     goBuild $* || exit 0
-    rm -rf $pub_dir/src/$app_path||exit 0
-    mkdir -p $pub_dir/src/$app_path||exit 0
+    rm -rf $pub_dir/app/$app_path||exit 0
+    mkdir -p $pub_dir/app/$app_path||exit 0
     # 收集可执行程序的资源文件
-    cp $app_name $pub_dir/src/$app_path||exit 0
+    cp $app_name $pub_dir/app/$app_path||exit 0
     for d in $pub_app_res
     do
         if [ -d $pwd_dir/$d ]; then
-            cp -rf $pwd_dir/$d $pub_dir/src/$app_path||exit 0
+            cp -rf $pwd_dir/$d $pub_dir/app/$app_path||exit 0
         fi
     done
 }
@@ -397,7 +397,7 @@ case "$1" in
         exit 0
     ;;
     "build"|"mod"|"get"|"update"|"publish")
-        if [ "$sup_mode" = "pub" ]; then
+        if [ "$sup_mode" = "app" ]; then
             echo '#' "Can not use the command in published mode"
             exit 0
         fi
