@@ -90,9 +90,9 @@ resetCfgName(){
         pwd_dir="$1"
     fi
     app_name="`basename $pwd_dir`"
-    app_path="${pwd_dir#\/*$sup_mode\/}"
+    app_path="${pwd_dir#*$PRJ_ROOT\/}"
     if [ "$app_path" = "$pwd_dir" ]; then
-        app_path="$sup_mode"
+        app_path="$PRJ_NAME"
     fi
     cfg_name="$PRJ_NAME.$(awk -v s=$app_path 'BEGIN{gsub("/",".",s);print s}')"
 }
