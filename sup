@@ -4,7 +4,7 @@
 sup_ver="v4"
 sup_mode="src" # src为源码模式，app为非源码模式
 
-export GOPROXY=https://goproxy.io # GOPROXY ON
+export GOPROXY=https://goproxy.cn # GOPROXY ON
 
 # 检查依赖
 if [ -z "$PRJ_NAME" ]; then
