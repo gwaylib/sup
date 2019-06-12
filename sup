@@ -99,7 +99,7 @@ resetCfgName(){
 
 # call supevisorctl
 callSup(){
-    command -v supervisorctl >/dev/null 2>&1 || { echo -e >&2 "Aborted. \nRequire 'supervisorctl' but it's not installed, you need to install supervisor service at first. \nFor example on debian system: sudo apt-get install supervisor."; exit 0; }
+    type supervisorctl >/dev/null 2>&1||{ echo -e >&2 "Aborted. \nRequire 'supervisorctl' but it's not installed, you need to install supervisor service at first. \nFor example on debian system: sudo apt-get install supervisor."; exit 0; }
     sudo supervisorctl $*
 }
 
