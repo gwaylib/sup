@@ -158,11 +158,6 @@ supStatus(){
 }
 
 goBuild(){
-    if [ -f "./build.sh" ]; then
-        sh ./build.sh
-        return
-    fi
-
     # go build
     if [ $# -gt 0 ]; then
         go build $1 $2 $3 $4 $5 $6 $7 $8 || exit 0
@@ -281,6 +276,10 @@ cleanApp(){
 publishApp(){
     resetCfgName
     echo '#' "Publishing $cfg_name to $pub_dir"
+    if [ -f "./publish.sh" ]; then
+        echo "# Calling publish.sh"
+        sh ./publish.sh
+    fi
 
     # 创建固定辅助二进制程序指令目录
     mkdir -p $pub_dir/bin
@@ -422,9 +421,9 @@ case "$1" in
        echo "sup update # 使用GOPROXY更新当前目录下的go get依赖，相当于GORPOXY=\"\" && go get -v -u"
        echo "sup update all # 使用GOPROXY使用最新的库编译env.sh的\$BUILD_ALL_PATH路径下的程序"
        echo "sup update all-noproxy # 关闭GOPROXY，使用最新的库编译env.sh的\$BUILD_ALL_PATH路径下的程序"
-       echo "sup build # 若编译目录中存在build.sh，使用sh ./build.sh; 否则使用GOPROXY, go build当前目录的main程序, 支持参数扩展"
-       echo "sup build all # 依次编译env.sh的\$BUILD_ALL_PATH路径下的程序, 若编译目录中存在build.sh，使用sh ./build.sh编译; 否则使用GOPROXY进行go build"
-       echo "sup build all-noporxy # 依次编译env.sh的\$BUILD_ALL_PATH路径下的程序,若编译目录中存在build.sh，使用sh ./build.sh; 否则关闭GOPROXY进行go build"
+       echo "sup build # 使用GOPROXY, go build当前目录的main程序, 支持参数扩展"
+       echo "sup build all # 依次编译env.sh的\$BUILD_ALL_PATH路径下的程序, 使用GOPROXY进行go build"
+       echo "sup build all-noporxy # 依次编译env.sh的\$BUILD_ALL_PATH路径下的程序,关闭GOPROXY进行go build"
        echo ""
        echo "以下是管理依赖的指令"
        echo "sup mod # 下载依赖或初始化依赖，若未初始化过，则执行初始化工作，同go mod"
@@ -436,8 +435,8 @@ case "$1" in
        echo "sup install all-noproxy # 关闭GOPROXY安装env.sh的\$BUILD_ALL_PATH路径下程序的supervisor配置文件，该指令暂未支持运行参数传递"
        echo "sup clean # 清理当前目录的发布环境"
        echo "sup clean all # 依次清理env.sh的\$BUILD_ALL_PATH路径下的发布环境"
-       echo "sup publish # 发布为非源码部署, 需要先build"
-       echo "sup publish all # 使用\$BUILD_ALL_PATH路径下的部署"
+       echo "sup publish # 发布为非源码部署, 若该目录下存在publish.sh, 将优先调用后继续打包。"
+       echo "sup publish all # 依次对\$BUILD_ALL_PATH路径下进行publish操作。"
        echo "sup start # 启动当前目录的程序(supervisorctrl start \$cfg_name)"
        echo "sup start all # 依次启动env.sh的\$BUILD_ALL_PATH路径下的程序"
        echo "sup restart # 重启当前目录的程序(supervisorctrl restart \$cfg_name)"
