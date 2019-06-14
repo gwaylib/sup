@@ -293,13 +293,7 @@ publishApp(){
         sed -i "s/sup_mode=\"src\"/sup_mode=\"app\"/g" $pub_dir/bin/sup||exit 0
     fi
 
-    # 创建固定的配置文件目录
-    if [ -d $PRJ_ROOT/$pub_etc_dir ]; then
-        mkdir -p $pub_dir/etc # 固定目录
-        cp -rf $PRJ_ROOT/$pub_etc_dir/* $pub_dir/etc/|| exit 0
-    fi
-
-    # 收集根目录下的配置文件
+    # 收集根目录下的资源文件
     for d in $pub_root_res
     do
         if [ -d $PRJ_ROOT/$d ]; then
