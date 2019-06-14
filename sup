@@ -306,14 +306,14 @@ publishApp(){
     
     # 编译出可执行程序
     goBuild $* || exit 0
-    rm -rf $pub_dir/app/$app_path||exit 0
-    mkdir -p $pub_dir/app/$app_path||exit 0
+    rm -rf $pub_dir/$app_path||exit 0
+    mkdir -p $pub_dir/$app_path||exit 0
     # 收集可执行程序的资源文件
-    cp $app_name $pub_dir/app/$app_path||exit 0
+    cp $app_name $pub_dir/$app_path||exit 0
     for d in $pub_app_res
     do
         if [ -d $pwd_dir/$d ]; then
-            cp -rf $pwd_dir/$d $pub_dir/app/$app_path||exit 0
+            cp -rf $pwd_dir/$d $pub_dir/$app_path||exit 0
         fi
     done
 }
