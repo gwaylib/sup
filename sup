@@ -25,13 +25,12 @@ cfg_end="conf"
 
 pub_root="$PRJ_ROOT/publish"
 pub_dir="$pub_root/$PRJ_NAME"
-pub_etc_dir="$PUB_ETC_DIR"
-if [ -z "$PUB_ETC_DIR" ] ; then
-    pub_etc_dir="etc"
-fi
 pub_root_res="$PUB_ROOT_RES"
+if [ -z "$pub_root_res" ] ; then
+    pub_root_res="etc"
+fi
 pub_app_res="$PUB_APP_RES"
-if [ -z "$PUB_APP_RES" ] ; then
+if [ -z "$pub_app_res" ] ; then
     pub_app_res="res public"
 fi
 
@@ -444,8 +443,7 @@ case "$1" in
        echo "\$PRJ_NAME # 项目英文名称,必须,用于脚本中的项目名称生成, 例如:testing"
        echo "\$PRJ_ROOT # 项目工作根目录,必须,用于项目资源寻址, 例如:/root"
        echo ""
-       echo "\$PUB_ETC_DIR # 发布的etc目录,可选,未填写时默认为:\$PRJ_ROOT/etc"
-       echo "\$PUB_ROOT_RES # 发布时收集的项目根目录资源文件夹名, 未填写时默认:无"
+       echo "\$PUB_ROOT_RES # 发布时收集的项目根目录资源文件夹名, 未填写时默认:etc"
        echo "\$PUB_APP_RES # 发布时应用当前目录下的资源文件夹名, 未填写时默认:res public"
        echo ""
        echo "\$SUP_ETC_DIR # 使用supervisord的配置文件时生成的supervisor目录, 未填写时默认:/etc/supervisor/conf.d"
