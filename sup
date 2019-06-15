@@ -32,9 +32,10 @@ resetCfgName(){
     app_path="${pwd_dir#*$PRJ_ROOT\/}"
     if [ "$app_path" = "$pwd_dir" ]; then
         app_path="$PRJ_NAME"
-    cfg_name=${PRJ_NAME}.$app_name
+        cfg_name=${PRJ_NAME}.$app_name
+    else
+        cfg_name="$PRJ_NAME.$(awk -v s=$app_path 'BEGIN{gsub("/",".",s);print s}')"
     fi
-    cfg_name="$PRJ_NAME.$(awk -v s=$app_path 'BEGIN{gsub("/",".",s);print s}')"
 }
 
 resetCfgName # init data
