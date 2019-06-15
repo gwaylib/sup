@@ -17,11 +17,28 @@ if [ -z "$PRJ_ROOT" ]; then
 fi
 
 # 环境变量配置
-pwd_dir=$PWD
-app_name="`basename $pwd_dir`"
-app_path="${pwd_dir#*/$sup_mod/}"
-cfg_name="$PRJ_NAME.$(awk -v s=$app_path 'BEGIN{gsub("/",".",s);print s}')"
+pwd_dir=""
+app_name=""
+app_path=""
+cfg_name=""
 cfg_end="conf"
+
+resetCfgName(){
+    pwd_dir="`pwd`"
+    if [ ${#1} -gt 0 ]; then
+        pwd_dir="$1"
+    fi
+    app_name="`basename $pwd_dir`"
+    app_path="${pwd_dir#*$PRJ_ROOT\/}"
+    if [ "$app_path" = "$pwd_dir" ]; then
+        app_path="$PRJ_NAME"
+    cfg_name=${PRJ_NAME}.$app_name
+    fi
+    cfg_name="$PRJ_NAME.$(awk -v s=$app_path 'BEGIN{gsub("/",".",s);print s}')"
+}
+
+resetCfgName # init data
+
 
 pub_root="$PRJ_ROOT/publish"
 pub_dir="$pub_root/$PRJ_NAME"
@@ -82,19 +99,6 @@ sup_app_env="PRJ_ROOT=\\\"$PRJ_ROOT\\\",GIN_MODE=\\\"release\\\",LD_LIBRARY_PATH
 if [ -n "$SUP_APP_ENV" ] ; then
     sup_app_env="$SUP_APP_ENV"
 fi
-
-resetCfgName(){
-    pwd_dir="`pwd`"
-    if [ ${#1} -gt 0 ]; then
-        pwd_dir="$1"
-    fi
-    app_name="`basename $pwd_dir`"
-    app_path="${pwd_dir#*$PRJ_ROOT\/}"
-    if [ "$app_path" = "$pwd_dir" ]; then
-        app_path="$PRJ_NAME"
-    fi
-    cfg_name="$PRJ_NAME.$(awk -v s=$app_path 'BEGIN{gsub("/",".",s);print s}')"
-}
 
 # call supevisorctl
 callSup(){
