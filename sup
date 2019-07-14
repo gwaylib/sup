@@ -49,7 +49,7 @@ if [ -z "$pub_root_res" ] ; then
 fi
 pub_app_res="$PUB_APP_RES"
 if [ -z "$pub_app_res" ] ; then
-    pub_app_res="res public"
+    pub_app_res="etc res public"
 fi
 
 sup_user=$SUP_USER
@@ -322,6 +322,11 @@ publishApp(){
     do
         if [ -d $pwd_dir/$d ]; then
             cp -rf $pwd_dir/$d $pub_dir/$app_path||exit 0
+            continue
+        fi
+        if [ -f $pwd_dir/$d ]; then
+            cp -rf $pwd_dir/$d $pub_dir/$app_path||exit 0
+            continue
         fi
     done
 }
