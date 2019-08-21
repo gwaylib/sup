@@ -288,13 +288,33 @@ publishApp(){
         sh ./publish.sh
     fi
 
+    rm -rf $pub_dir/$app_path||exit 0
+    # 收集app资源文件
+    for d in $pub_app_res
+    do
+        if [ -d $pwd_dir/$d ]; then
+            mkdir -p $pub_dir/$app_path||exit 0
+            cp -rf $pwd_dir/$d $pub_dir/$app_path||exit 0
+            continue
+        fi
+        if [ -f $pwd_dir/$d ]; then
+            mkdir -p $pub_dir/$app_path||exit 0
+            cp -rf $pwd_dir/$d $pub_dir/$app_path||exit 0
+            continue
+        fi
+    done
+    # 收集app可执行程序
+    if [ -f ./$app_name ];then
+        mkdir -p $pub_dir/$app_path||exit 0
+        cp $app_name $pub_dir/$app_path||exit 0
+    fi
+
     # 创建固定辅助二进制程序指令目录
     mkdir -p $pub_dir/bin
     cp -rf $PRJ_ROOT/env.sh $pub_dir/||exit 0
     cp -rf $(dirname $0)/sup $pub_dir/bin/||exit 0
     # 修改sup指令中的模式
-    if [ `uname` = "Darwin" ]
-    then
+    if [ `uname` = "Darwin" ]; then
         sed -i "" "s/sup_mode=\"src\"/sup_mode=\"app\"/g" $pub_dir/bin/sup||exit 0
     else
         sed -i "s/sup_mode=\"src\"/sup_mode=\"app\"/g" $pub_dir/bin/sup||exit 0
@@ -306,25 +326,6 @@ publishApp(){
         if [ -d $PRJ_ROOT/$d ]; then
             mkdir -p $pub_dir/$d||exit 0
             cp -rf $PRJ_ROOT/$d $pub_dir/||exit 0
-        fi
-    done
-    
-    rm -rf $pub_dir/$app_path||exit 0
-    mkdir -p $pub_dir/$app_path||exit 0
-    # 收集可执行程序
-    if [ -f ./$app_name ];then
-        cp $app_name $pub_dir/$app_path||exit 0
-    fi
-    # 收集可执行程序的资源文件
-    for d in $pub_app_res
-    do
-        if [ -d $pwd_dir/$d ]; then
-            cp -rf $pwd_dir/$d $pub_dir/$app_path||exit 0
-            continue
-        fi
-        if [ -f $pwd_dir/$d ]; then
-            cp -rf $pwd_dir/$d $pub_dir/$app_path||exit 0
-            continue
         fi
     done
 }
