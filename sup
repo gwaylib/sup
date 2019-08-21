@@ -61,23 +61,21 @@ if [ -z "$SUP_ETC_DIR" ] ; then
     sup_etc_dir="/etc/supervisor/conf.d"
     # 自动判断操作系统
     case `uname` in
-        "Linux")
-            # aptitude install lsb-release
-            # yum install redhat-lsb
-            sysname=`lsb_release -is` > /dev/null
+        "Linux"|"linux")
+            sysname=$(cat /etc/issue|awk -F " " '{print $1}')
             case $sysname in
-                "Debian")
+                "Debian"|"debian")
                     sup_etc_dir="/etc/supervisor/conf.d/"
                     cfg_end="conf"
                     ;;
-                "CentOS")
+                "CentOS"|"centos")
                     sup_etc_dir="/etc/supervisord.d/"
                     cfg_end="cfg"
                     ;;
                     # TODO:自动识别更多的版本
             esac
         ;;
-        "Darwin"):
+        "Darwin")
             # brew install supervisor
             sup_etc_dir="/usr/local/etc/supervisord.d/"
             cfg_end="ini"
