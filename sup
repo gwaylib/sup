@@ -327,6 +327,9 @@ publishApp(){
             mkdir -p $pub_dir/$d||exit 0
             cp -rf $PRJ_ROOT/$d $pub_dir/||exit 0
         fi
+        if [ -f $PRJ_ROOT/$d ]; then
+            cp -rf $PRJ_ROOT/$d $pub_dir/ || exit 0
+        fi
     done
 }
 
